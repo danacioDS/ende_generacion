@@ -5,8 +5,8 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuración de la página
-st.set_page_config(page_title="Dashboard de Energía", layout="wide")
-st.title("Análisis Integral de Energía por Tecnología")
+st.set_page_config(page_title="Dashboard de Potencia", layout="wide")
+st.title("Análisis Integral de Potencia por Tecnología")
 
 # 1. Optimización de carga de datos con manejo de nombres de columnas
 @st.cache_data
@@ -39,7 +39,7 @@ def load_and_transform_data():
             
         # Leer solo columnas necesarias usando el nombre encontrado
         df = pd.read_excel(file_path, engine="openpyxl", 
-                          usecols=lambda x: "Energía MWh" in x or x in ['CENTRAL', tech_col])
+                          usecols=lambda x: "Potencia kW" in x or x in ['CENTRAL', tech_col])
         
         if df.empty:
             st.error("El archivo está vacío")
@@ -47,8 +47,8 @@ def load_and_transform_data():
 
         # 2. Transformación vectorizada
         df.columns = df.columns.str.strip()
-        energy_cols = [col for col in df.columns if "Energía MWh" in col]
-        
+        energy_cols = [col for col in df.columns if "Potencia kW" in col]
+
         # Renombrar columna de tecnología a nombre consistente
         df = df.rename(columns={tech_col: 'TECNOLOGIA'})
         
@@ -69,7 +69,7 @@ def load_and_transform_data():
             id_vars=['CENTRAL', 'TECNOLOGIA'],
             value_vars=energy_cols,
             var_name='Periodo',
-            value_name='Energía MWh'
+            value_name='Potencia kW'
         )
         
         # Extraer periodo y mapear fecha
@@ -117,7 +117,7 @@ else:
     st.warning("No hay datos disponibles para filtrar")
 
 # 4. Pre-cálculos globales
-total_energia_sistema = df_filtered['Energía MWh'].sum()
+total_potencia_sistema = df_filtered['Potencia kW'].sum()
 tecnologias = df_filtered['TECNOLOGIA'].unique().tolist()
 
 # Selección de tecnología
@@ -137,8 +137,8 @@ def plot_central_energy(df_central, central_name):
     fig = px.line(
         df_central,
         x='FECHA',
-        y='Energía MWh',
-        title=f"Energía para {central_name}",
+        y='Potencia kW',
+        title=f"Potencia para {central_name}",
         markers=True
     )
     fig.update_traces(
@@ -146,7 +146,7 @@ def plot_central_energy(df_central, central_name):
         marker=dict(size=8, symbol='circle', color='#1f77b4')
     )
     fig.update_layout(
-        yaxis_title="Energía (MWh)", 
+        yaxis_title="Potencia (kW)", 
         xaxis_title="Fecha", 
         showlegend=False,
         template='plotly_white'
@@ -159,13 +159,13 @@ def plot_tecnologia_energy(df_tecnologia, tecnologia_name):
         return None
     
     # Agrupar por fecha
-    df_grouped = df_tecnologia.groupby('FECHA', as_index=False)['Energía MWh'].sum()
-    
+    df_grouped = df_tecnologia.groupby('FECHA', as_index=False)['Potencia kW'].sum()
+
     fig = px.line(
         df_grouped,
         x='FECHA',
-        y='Energía MWh',
-        title=f"Energía para {tecnologia_name}",
+        y='Potencia kW',
+        title=f"Potencia para {tecnologia_name}",
         markers=True
     )
     fig.update_traces(
@@ -173,7 +173,7 @@ def plot_tecnologia_energy(df_tecnologia, tecnologia_name):
         marker=dict(size=8, symbol='diamond', color='#d62728')
     )
     fig.update_layout(
-        yaxis_title="Energía (MWh)", 
+        yaxis_title="Potencia (kW)", 
         xaxis_title="Fecha", 
         showlegend=False,
         template='plotly_white'
@@ -195,12 +195,12 @@ with tab1:
             st.plotly_chart(fig_central, use_container_width=True)
             
             # Métricas optimizadas
-            energia_total_central = df_central['Energía MWh'].sum()
-            energia_promedio_central = df_central['Energía MWh'].mean()
-            porcentaje_central = (energia_total_central / total_energia_sistema) * 100
+            potencia_total_central = df_central['Potencia kW'].sum()
+            potencia_promedio_central = df_central['Potencia kW'].mean()
+            porcentaje_central = (potencia_total_central / total_potencia_sistema) * 100
             
             col1, col2 = st.columns(2)
-            col1.metric("Energía Promedio", f"{energia_promedio_central:,.2f} MWh")
+            col1.metric("Potencia Promedio", f"{potencia_promedio_central:,.2f} kW")
             col2.metric("Participación", f"{porcentaje_central:.2f}%")
         else:
             st.warning(f"No hay datos para: {selected_central}")
@@ -216,12 +216,12 @@ with tab1:
             st.plotly_chart(fig_tecnologia, use_container_width=True)
             
             # Métricas optimizadas
-            energia_total_tecnologia = df_tecnologia['Energía MWh'].sum()
-            energia_promedio_tecnologia = df_tecnologia.groupby('FECHA')['Energía MWh'].sum().mean()
-            porcentaje_tecnologia = (energia_total_tecnologia / total_energia_sistema) * 100
+            potencia_total_tecnologia = df_tecnologia['Potencia kW'].sum()
+            potencia_promedio_tecnologia = df_tecnologia.groupby('FECHA')['Potencia kW'].sum().mean()
+            porcentaje_tecnologia = (potencia_total_tecnologia / total_potencia_sistema) * 100
             
             col1, col2 = st.columns(2)
-            col1.metric("Energía Promedio", f"{energia_promedio_tecnologia:,.2f} MWh")
+            col1.metric("Potencia Promedio", f"{potencia_promedio_tecnologia:,.2f} kW")
             col2.metric("Participación", f"{porcentaje_tecnologia:.2f}%")
         else:
             st.warning(f"No hay datos para: {selected_tecnologia}")
@@ -230,17 +230,17 @@ with tab1:
     st.subheader("Evolución del Sistema")
 
     if not df_filtered.empty:
-        df_sistema = df_filtered.groupby('FECHA')['Energía MWh'].sum().reset_index()
-        df_sistema['Energía MWh'] = df_sistema['Energía MWh'].round(2)
-        energia_promedio_sistema = df_sistema['Energía MWh'].mean()
+        df_sistema = df_filtered.groupby('FECHA')['Potencia kW'].sum().reset_index()
+        df_sistema['Potencia kW'] = df_sistema['Potencia kW'].round(2)
+        potencia_promedio_sistema = df_sistema['Potencia kW'].mean()
 
         fig_sistema = px.bar(
             df_sistema,
             x='FECHA',
-            y='Energía MWh',
-            color='Energía MWh',
+            y='Potencia kW',
+            color='Potencia kW',
             color_continuous_scale='Viridis',
-            title="Evolución de la Energía Móvil del Sistema",
+            title="Evolución de la Potencia del Sistema",
             text_auto=True
         )
         
@@ -256,7 +256,7 @@ with tab1:
         )
         st.plotly_chart(fig_sistema, use_container_width=True)
 
-        st.metric(label="Energía Promedio del Sistema", value=f"{energia_promedio_sistema:,.2f} MWh")
+        st.metric(label="Potencia Promedio del Sistema", value=f"{potencia_promedio_sistema:,.2f} kW")
     else:
         st.warning("No hay datos disponibles para mostrar la evolución del sistema")
     
@@ -264,9 +264,9 @@ with tab1:
     st.subheader("Participación por Tecnología")
     if not df_filtered.empty:
         participacion = (
-            df_filtered.groupby('TECNOLOGIA', as_index=False)['Energía MWh']
+            df_filtered.groupby('TECNOLOGIA', as_index=False)['Potencia kW']
             .sum()
-            .assign(Porcentaje=lambda x: (x['Energía MWh'] / total_energia_sistema) * 100)
+            .assign(Porcentaje=lambda x: (x['Potencia kW'] / total_potencia_sistema) * 100)
             .sort_values('Porcentaje', ascending=False)
         )
         
@@ -308,21 +308,21 @@ with tab2:
         
         df_comparacion = (
             df_filtered.groupby(['FECHA', 'TECNOLOGIA'], as_index=False)
-            ['Energía MWh'].sum()
+            ['Potencia kW'].sum()
         )
         
         fig_comparativo = px.line(
             df_comparacion,
             x='FECHA',
-            y='Energía MWh',
+            y='Potencia kW',
             color='TECNOLOGIA',
             markers=True,
             line_shape='spline',
-            title="Comparación de Energía por Tecnología"
+            title="Comparación de Potencia por Tecnología"
         )
         
         fig_comparativo.update_layout(
-            yaxis_title="Energía (MWh)",
+            yaxis_title="Potencia (kW)",
             xaxis_title="Fecha",
             legend_title="Tecnologías",
             height=500
@@ -332,20 +332,20 @@ with tab2:
         # Tabla de resumen
         st.subheader("Resumen Estadístico por Tecnología")
 
-        total_por_mes = df_filtered.groupby('FECHA', as_index=False, sort=False)['Energía MWh'].sum()
-        total_por_mes = total_por_mes.rename(columns={'Energía MWh': 'Total_Sistema'})
+        total_por_mes = df_filtered.groupby('FECHA', as_index=False, sort=False)['Potencia kW'].sum()
+        total_por_mes = total_por_mes.rename(columns={'Potencia kW': 'Total_Sistema'})
 
-        tecnologia_por_mes = df_filtered.groupby(['FECHA', 'TECNOLOGIA'], as_index=False)['Energía MWh'].sum()
+        tecnologia_por_mes = df_filtered.groupby(['FECHA', 'TECNOLOGIA'], as_index=False)['Potencia kW'].sum()
 
         df_participacion = pd.merge(tecnologia_por_mes, total_por_mes, on='FECHA')
-        df_participacion['Participacion'] = (df_participacion['Energía MWh'] / df_participacion['Total_Sistema']) * 100
+        df_participacion['Participacion'] = (df_participacion['Potencia kW'] / df_participacion['Total_Sistema']) * 100
 
         stats = (
             df_participacion.groupby('TECNOLOGIA', as_index=False)
             .agg(
-                Minimo=('Energía MWh', 'min'),
-                Promedio=('Energía MWh', 'mean'),
-                Maximo=('Energía MWh', 'max'),
+                Minimo=('Potencia kW', 'min'),
+                Promedio=('Potencia kW', 'mean'),
+                Maximo=('Potencia kW', 'max'),
                 Participacion_Promedio=('Participacion', 'mean')
             )
         )
@@ -354,15 +354,15 @@ with tab2:
 
         stats = stats.rename(columns={
             'TECNOLOGÍA': 'Tecnología',
-            'Minimo': 'Mínimo (MWh)',
-            'Promedio': 'Promedio (MWh)',
-            'Maximo': 'Máximo (MWh)',
+            'Minimo': 'Mínimo (kW)',
+            'Promedio': 'Promedio (kW)',
+            'Maximo': 'Máximo (kW)',
             'Participacion_Promedio': 'Participación Promedio (%)'
         })
 
-        stats['Mínimo (MWh)'] = stats['Mínimo (MWh)'].apply(lambda x: f"{x:,.2f}")
-        stats['Promedio (MWh)'] = stats['Promedio (MWh)'].apply(lambda x: f"{x:,.2f}")
-        stats['Máximo (MWh)'] = stats['Máximo (MWh)'].apply(lambda x: f"{x:,.2f}")
+        stats['Mínimo (kW)'] = stats['Mínimo (kW)'].apply(lambda x: f"{x:,.2f}")
+        stats['Promedio (kW)'] = stats['Promedio (kW)'].apply(lambda x: f"{x:,.2f}")
+        stats['Máximo (kW)'] = stats['Máximo (kW)'].apply(lambda x: f"{x:,.2f}")
         stats['Participación Promedio (%)'] = stats['Participación Promedio (%)'].apply(lambda x: f"{x:.2f}%")
 
         st.dataframe(stats)
@@ -373,7 +373,7 @@ st.sidebar.subheader("Métricas del Sistema")
 if not df_filtered.empty:
     st.sidebar.metric("Centrales", df_filtered['CENTRAL'].nunique())
     st.sidebar.metric("Tecnologías", len(tecnologias))
-    st.sidebar.metric("Energía Total", f"{total_energia_sistema:,.2f} MWh")
+    st.sidebar.metric("Potencia Total", f"{total_potencia_sistema:,.2f} kW")
     st.sidebar.caption(f"Periodo: {df_filtered['FECHA'].min().strftime('%Y-%m')} a {df_filtered['FECHA'].max().strftime('%Y-%m')}")
 else:
     st.sidebar.warning("Sin datos para mostrar métricas")

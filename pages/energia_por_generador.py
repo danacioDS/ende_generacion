@@ -23,7 +23,7 @@ def load_and_transform_data():
             
         # Leer solo columnas necesarias
         df = pd.read_excel(file_path, engine="openpyxl", 
-                          usecols=lambda x: "Energía MWh" in x or x in ['CENTRAL', 'GENERADOR'])
+                          usecols=lambda x: "Energía kWh" in x or x in ['CENTRAL', 'GENERADOR'])
         
         if df.empty:
             st.error("El archivo está vacío")
@@ -31,7 +31,7 @@ def load_and_transform_data():
 
         # 2. Transformación vectorizada
         df.columns = df.columns.str.strip()
-        energy_cols = [col for col in df.columns if "Energía MWh" in col]
+        energy_cols = [col for col in df.columns if "Energía kWh" in col]
         
         # Crear mapeo de fechas optimizado
         date_mapping = {}
@@ -46,7 +46,7 @@ def load_and_transform_data():
             id_vars=['CENTRAL', 'GENERADOR'],
             value_vars=energy_cols,
             var_name='Periodo',
-            value_name='Energía MWh'
+            value_name='Energía kWh'
         )
         
         # Extraer periodo y mapear fecha
@@ -94,7 +94,7 @@ else:
     st.warning("No hay datos disponibles para filtrar")
 
 # 4. Pre-cálculos globales
-total_energia_sistema = df_filtered['Energía MWh'].sum()
+total_energia_sistema = df_filtered['Energía kWh'].sum()
 generadores = df_filtered['GENERADOR'].unique().tolist()
 
 # Selección de generador
@@ -114,7 +114,7 @@ def plot_central_energy(df_central, central_name):
     fig = px.line(
         df_central,
         x='FECHA',
-        y='Energía MWh',
+        y='Energía kWh',
         title=f"Energía para {central_name}",
         markers=True
     )
@@ -123,7 +123,7 @@ def plot_central_energy(df_central, central_name):
         marker=dict(size=8, symbol='circle', color='#1f77b4')
     )
     fig.update_layout(
-        yaxis_title="Energía (MWh)", 
+        yaxis_title="Energía (kWh)", 
         xaxis_title="Fecha", 
         showlegend=False,
         template='plotly_white'
@@ -136,12 +136,12 @@ def plot_generador_energy(df_generador, generador_name):
         return None
     
     # Agrupar por fecha
-    df_grouped = df_generador.groupby('FECHA', as_index=False)['Energía MWh'].sum()
+    df_grouped = df_generador.groupby('FECHA', as_index=False)['Energía kWh'].sum()
     
     fig = px.line(
         df_grouped,
         x='FECHA',
-        y='Energía MWh',
+        y='Energía kWh',
         title=f"Energía para {generador_name}",
         markers=True
     )
@@ -150,7 +150,7 @@ def plot_generador_energy(df_generador, generador_name):
         marker=dict(size=8, symbol='diamond', color='#d62728')
     )
     fig.update_layout(
-        yaxis_title="Energía (MWh)", 
+        yaxis_title="Energía (kWh)", 
         xaxis_title="Fecha", 
         showlegend=False,
         template='plotly_white'
@@ -172,12 +172,12 @@ with tab1:
             st.plotly_chart(fig_central, use_container_width=True)
             
             # Métricas optimizadas
-            energia_total_central = df_central['Energía MWh'].sum()
-            energia_promedio_central = df_central['Energía MWh'].mean()
+            energia_total_central = df_central['Energía kWh'].sum()
+            energia_promedio_central = df_central['Energía kWh'].mean()
             porcentaje_central = (energia_total_central / total_energia_sistema) * 100
             
             col1, col2 = st.columns(2)
-            col1.metric("Energía Promedio", f"{energia_promedio_central:,.2f} MWh")
+            col1.metric("Energía Promedio", f"{energia_promedio_central:,.2f} kWh")
             col2.metric("Participación", f"{porcentaje_central:.2f}%")
         else:
             st.warning(f"No hay datos para: {selected_central}")
@@ -193,12 +193,12 @@ with tab1:
             st.plotly_chart(fig_generador, use_container_width=True)
             
             # Métricas optimizadas
-            energia_total_generador = df_generador['Energía MWh'].sum()
-            energia_promedio_generador = df_generador.groupby('FECHA')['Energía MWh'].sum().mean()
+            energia_total_generador = df_generador['Energía kWh'].sum()
+            energia_promedio_generador = df_generador.groupby('FECHA')['Energía kWh'].sum().mean()
             porcentaje_generador = (energia_total_generador / total_energia_sistema) * 100
             
             col1, col2 = st.columns(2)
-            col1.metric("Energía Promedio", f"{energia_promedio_generador:,.2f} MWh")
+            col1.metric("Energía Promedio", f"{energia_promedio_generador:,.2f} kWh")
             col2.metric("Participación", f"{porcentaje_generador:.2f}%")
         else:
             st.warning(f"No hay datos para: {selected_generador}")
@@ -209,15 +209,15 @@ with tab1:
     # Evolución del sistema
     if not df_filtered.empty:
         st.subheader("Evolución de la Energía Móvil del Sistema")
-        df_sistema = df_filtered.groupby('FECHA')['Energía MWh'].sum().reset_index()
-        df_sistema['Energía MWh'] = df_sistema['Energía MWh'].round(2)
-        energia_promedio_sistema = df_sistema['Energía MWh'].mean()
+        df_sistema = df_filtered.groupby('FECHA')['Energía kWh'].sum().reset_index()
+        df_sistema['Energía kWh'] = df_sistema['Energía kWh'].round(2)
+        energia_promedio_sistema = df_sistema['Energía kWh'].mean()
 
         fig_sistema = px.bar(
             df_sistema,
             x='FECHA',
-            y='Energía MWh',
-            color='Energía MWh',  # blues Mapea valores a colores
+            y='Energía kWh',
+            color='Energía kWh',  # blues Mapea valores a colores
             color_continuous_scale='Viridis',  # Escala de colores
             title="Evolución de la Energía Móvil del Sistema",
             text_auto=True
@@ -235,7 +235,7 @@ with tab1:
         )
         st.plotly_chart(fig_sistema, use_container_width=True)
 
-        st.metric(label="Energía Promedio del Sistema", value=f"{energia_promedio_sistema:,.2f} MWh")
+        st.metric(label="Energía Promedio del Sistema", value=f"{energia_promedio_sistema:,.2f} kWh")
     else:
         st.warning("No hay datos disponibles para mostrar la evolución del sistema")
     
@@ -245,9 +245,9 @@ with tab1:
     if not df_filtered.empty:
         # Cálculo optimizado
         participacion = (
-            df_filtered.groupby('GENERADOR', as_index=False)['Energía MWh']
+            df_filtered.groupby('GENERADOR', as_index=False)['Energía kWh']
             .sum()
-            .assign(Porcentaje=lambda x: (x['Energía MWh'] / total_energia_sistema) * 100)
+            .assign(Porcentaje=lambda x: (x['Energía kWh'] / total_energia_sistema) * 100)
             .sort_values('Porcentaje', ascending=False)
         )
         
@@ -290,13 +290,13 @@ with tab2:
         # Agrupación eficiente
         df_comparacion = (
             df_filtered.groupby(['FECHA', 'GENERADOR'], as_index=False)
-            ['Energía MWh'].sum()
+            ['Energía kWh'].sum()
         )
         
         fig_comparativo = px.line(
             df_comparacion,
             x='FECHA',
-            y='Energía MWh',
+            y='Energía kWh',
             color='GENERADOR',
             markers=True,
             line_shape='spline',
@@ -304,7 +304,7 @@ with tab2:
         )
         
         fig_comparativo.update_layout(
-            yaxis_title="Energía (MWh)",
+            yaxis_title="Energía (kWh)",
             xaxis_title="Fecha",
             legend_title="Generadores",
             height=500
@@ -316,23 +316,23 @@ with tab2:
         st.subheader("Resumen Estadístico")
 
         # Calcular total del sistema por fecha
-        total_por_mes = df_filtered.groupby('FECHA', as_index=False, sort=False)['Energía MWh'].sum()
-        total_por_mes = total_por_mes.rename(columns={'Energía MWh': 'Total_Sistema'})
+        total_por_mes = df_filtered.groupby('FECHA', as_index=False, sort=False)['Energía kWh'].sum()
+        total_por_mes = total_por_mes.rename(columns={'Energía kWh': 'Total_Sistema'})
 
         # Calcular energía por generador por fecha
-        generador_por_mes = df_filtered.groupby(['FECHA', 'GENERADOR'], as_index=False)['Energía MWh'].sum()
+        generador_por_mes = df_filtered.groupby(['FECHA', 'GENERADOR'], as_index=False)['Energía kWh'].sum()
 
         # Combinar y calcular participación mensual
         df_participacion = pd.merge(generador_por_mes, total_por_mes, on='FECHA')
-        df_participacion['Participacion'] = (df_participacion['Energía MWh'] / df_participacion['Total_Sistema']) * 100
+        df_participacion['Participacion'] = (df_participacion['Energía kWh'] / df_participacion['Total_Sistema']) * 100
 
         # Calcular estadísticas (manteniendo valores numéricos)
         stats = (
             df_participacion.groupby('GENERADOR', as_index=False)
             .agg(
-                Minimo=('Energía MWh', 'min'),
-                Promedio=('Energía MWh', 'mean'),
-                Maximo=('Energía MWh', 'max'),
+                Minimo=('Energía kWh', 'min'),
+                Promedio=('Energía kWh', 'mean'),
+                Maximo=('Energía kWh', 'max'),
                 Participacion_Promedio=('Participacion', 'mean')
             )
         )
@@ -343,16 +343,16 @@ with tab2:
         # Renombrar columnas
         stats = stats.rename(columns={
             'GENERADOR': 'Generador',
-            'Minimo': 'Mínimo (MWh)',
-            'Promedio': 'Promedio (MWh)',
-            'Maximo': 'Máximo (MWh)',
+            'Minimo': 'Mínimo (kWh)',
+            'Promedio': 'Promedio (kWh)',
+            'Maximo': 'Máximo (kWh)',
             'Participacion_Promedio': 'Participación Promedio (%)'
         })
 
         # Formatear valores (después del ordenamiento)
-        stats['Mínimo (MWh)'] = stats['Mínimo (MWh)'].apply(lambda x: f"{x:,.2f}")
-        stats['Promedio (MWh)'] = stats['Promedio (MWh)'].apply(lambda x: f"{x:,.2f}")
-        stats['Máximo (MWh)'] = stats['Máximo (MWh)'].apply(lambda x: f"{x:,.2f}")
+        stats['Mínimo (kWh)'] = stats['Mínimo (kWh)'].apply(lambda x: f"{x:,.2f}")
+        stats['Promedio (kWh)'] = stats['Promedio (kWh)'].apply(lambda x: f"{x:,.2f}")
+        stats['Máximo (kWh)'] = stats['Máximo (kWh)'].apply(lambda x: f"{x:,.2f}")
         stats['Participación Promedio (%)'] = stats['Participación Promedio (%)'].apply(lambda x: f"{x:.2f}%")
 
 # Mostrar tabla ordenada
