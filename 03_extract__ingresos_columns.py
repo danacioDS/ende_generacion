@@ -1,6 +1,3 @@
-# 03_extract__ingresos_columns.py
-"""Extracts specific columns from Excel files in the downloads folder and saves them with a new name."""
-
 import os
 import pandas as pd
 
@@ -16,7 +13,6 @@ def extract_columns_and_save(folder):
     Extrae las columnas CENTRAL, Peaje filiales ENDE US$/MWh y PROMEDIO US$/MWh
     de cada archivo .xlsx (excluyendo archivos ya extraídos y específicos).
     """
-        
     excluded_files = ["serie_energia_cronologica.xlsx", "serie_temporal_larga.xlsx", "ingresos_empresas_*.xlsx", 
                       "serie_ingresos_cronologica.xlsx", "serie_temporal_ingresos.xlsx", "ingresos_empresas_*.xlsx",
                       "precios_empresas_*.xlsx", "energia_empresas_*.xlsx",
@@ -37,11 +33,11 @@ def extract_columns_and_save(folder):
 
                 # Renombrar columnas
                 df.columns = [
-                        "AGENTE",
-                        "Energía MWh",
-                        'Ingresos Energía MWh',
-                        'Ingresos Renovables MWh',
-                        'Ingresos Potencia kW'
+                        "CENTRAL",
+                        "Energía KWh",
+                        'Ingresos Energía USD',
+                        'Ingresos Renovables USD',
+                        'Ingresos Potencia USD'
                     ]
 
                 # Guardar archivo con las columnas extraídas

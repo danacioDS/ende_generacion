@@ -6,8 +6,8 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuración de la página
-st.set_page_config(page_title="Dashboard de Precios de Energía", layout="wide")
-st.title("Análisis Integral de Precios de Energía")
+st.set_page_config(page_title="Dashboard de Precios Monómicos de Energía", layout="wide")
+st.title("Análisis Integral de Precios Monómicos de Energía")
 
 @st.cache_data
 def load_and_transform_data():
@@ -51,7 +51,7 @@ def load_and_transform_data():
                 st.warning(f"Error convirtiendo periodo {period_code}: {str(e)}")
                 continue
 
-            temp_df = df[['AGENTE', 'EMPRESA', col]].copy()
+            temp_df = df[['CENTRAL', 'TECNOLOGIA', col]].copy()
             temp_df['FECHA'] = date
             temp_df['Precio Monómico USD/MWh'] = pd.to_numeric(
                 temp_df[col].astype(str).str.replace(',', ''), 
@@ -114,10 +114,10 @@ else:
     df_filtered = df
 
 # Selección de empresa y agente
-empresas = df_filtered['EMPRESA'].unique()
+empresas = df_filtered['TECNOLOGIA'].unique()
 selected_empresa = st.sidebar.selectbox("Seleccionar Empresa", empresas)
 
-agentes_disponibles = df_filtered[df_filtered['EMPRESA'] == selected_empresa]['AGENTE'].unique()
+agentes_disponibles = df_filtered[df_filtered['TECNOLOGIA'] == selected_empresa]['CENTRAL'].unique()
 selected_agente = st.sidebar.selectbox("Seleccionar Agente", agentes_disponibles)
 
 # Layout
@@ -128,7 +128,7 @@ with tab1:
 
     with col_left:
         st.subheader(f"Evolución de Precios para Agente: {selected_agente}")
-        df_agente = df_filtered[df_filtered['AGENTE'] == selected_agente]
+        df_agente = df_filtered[df_filtered['CENTRAL'] == selected_agente]
         precio_promedio_agente = df_agente['Precio Monómico USD/MWh'].mean()
 
         fig_agente = px.line(
@@ -147,8 +147,8 @@ with tab1:
 
     with col_right:
         st.subheader(f"Precio Promedio para Empresa: {selected_empresa}")
-        df_empresa = df_filtered[df_filtered['EMPRESA'] == selected_empresa]
-        df_empresa_prom = df_empresa.groupby(['FECHA', 'EMPRESA'])['Precio Monómico USD/MWh'].mean().reset_index()
+        df_empresa = df_filtered[df_filtered['TECNOLOGIA'] == selected_empresa]
+        df_empresa_prom = df_empresa.groupby(['FECHA', 'TECNOLOGIA'])['Precio Monómico USD/MWh'].mean().reset_index()
         precio_promedio_empresa = df_empresa['Precio Monómico USD/MWh'].mean()
 
         fig_empresa = px.line(
@@ -194,20 +194,20 @@ with tab2:
     st.header("Análisis Comparativo")
     st.subheader("Comparación de Empresas")
 
-    df_empresas_prom_tab2 = df_filtered.groupby(['FECHA', 'EMPRESA'])['Precio Monómico USD/MWh'].mean().reset_index()
+    df_empresas_prom_tab2 = df_filtered.groupby(['FECHA', 'TECNOLOGIA'])['Precio Monómico USD/MWh'].mean().reset_index()
     fig_comparacion = px.line(
         df_empresas_prom_tab2,
         x='FECHA',
         y='Precio Monómico USD/MWh',
-        color='EMPRESA',
-        line_dash='EMPRESA',
-        symbol='EMPRESA',
+        color='TECNOLOGIA',
+        line_dash='TECNOLOGIA',
+        symbol='TECNOLOGIA',
         title="Comparación de Precios Promedio por Empresa"
     )
     fig_comparacion.update_layout(
         yaxis_title="Precio Monómico Promedio (USD/MWh)",
         xaxis_title="Fecha",
-        legend_title="Empresas"
+        legend_title="Tecnologias",
     )
     st.plotly_chart(fig_comparacion, use_container_width=True)
 
@@ -223,8 +223,8 @@ with tab2:
 # Sidebar: información del sistema
 st.sidebar.markdown("---")
 st.sidebar.subheader("Información del Sistema")
-st.sidebar.write(f"Total de agentes: {df_filtered['AGENTE'].nunique()}")
-st.sidebar.write(f"Total de empresas: {df_filtered['EMPRESA'].nunique()}")
+st.sidebar.write(f"Total de agentes: {df_filtered['CENTRAL'].nunique()}")
+st.sidebar.write(f"Total de empresas: {df_filtered['TECNOLOGIA'].nunique()}")
 if 'FECHA' in df_filtered.columns:
     min_date = df_filtered['FECHA'].min().strftime('%Y-%m-%d')
     max_date = df_filtered['FECHA'].max().strftime('%Y-%m-%d')

@@ -57,5 +57,11 @@ docker build -t ende_distri .
 # Ejecutar contenedor
 docker run --rm -p 8501:8501 ende_distri
 =======
-# ende_generacion
->>>>>>> ae13ece9b39e87880f626075e498efeaf93efcbb
+# Actualizar en github 
+
+git init
+git add .
+git commit -m "Comentario de actulizacion"
+git remote add origin https://github.com/tu-usuario/tu-repositorio.git
+git push -u origin main
+git status
