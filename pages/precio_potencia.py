@@ -176,7 +176,8 @@ with tab1:
         x='FECHA',
         y='Precio Potencia USD/kW',
         title="Evolución del Precio Promedio del Sistema",
-        text_auto=True
+        text_auto=True,
+        color_discrete_sequence=['#ff7f0e']  # Color naranja,
     )
     
     fig_sistema.update_traces(

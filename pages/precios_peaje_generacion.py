@@ -179,7 +179,7 @@ with tab1:
         y='Peaje generación USD/MWh',
         title="Evolución del Precio Promedio del Sistema",
         text_auto=True,
-        color_discrete_sequence=['#1f77b4'],
+        color_discrete_sequence=["#b4291f"],
     )
     
     fig_sistema.update_traces(
