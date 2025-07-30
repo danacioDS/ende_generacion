@@ -239,7 +239,7 @@ with tab1:
             x='FECHA',
             y='Energía kWh',
             color='Energía kWh',
-            color_continuous_scale='Viridis',
+            color_continuous_scale='cividis',
             title="Evolución de la Energía Móvil del Sistema",
             text_auto=True
         )
@@ -276,7 +276,7 @@ with tab1:
             y='TECNOLOGIA',
             orientation='h',
             color='Porcentaje',
-            color_continuous_scale='Blues',
+            color_continuous_scale='Oranges',
             text='Porcentaje',
             labels={'Porcentaje': 'Participación (%)', 'TECNOLOGIA': ''}
         )

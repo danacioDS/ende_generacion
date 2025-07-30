@@ -6,13 +6,14 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuración de la página
-st.set_page_config(page_title="Dashboard de Precios de Energía", layout="wide")
-st.title("Análisis Integral de Precios de Energía")
+st.set_page_config(page_title="Dashboard de Peaje de Generacion", layout="wide")
+st.title("Análisis Integral de Peajes de Generación")
+
 @st.cache_data
 def load_and_transform_data():
     try:
         current_dir = Path(__file__).parent if "__file__" in locals() else Path.cwd()
-        file_path = current_dir / "data" / "serie_precios_energia.xlsx"
+        file_path = current_dir / "data" / "serie_peaje.xlsx"
 
         if not file_path.exists():
             st.error("Archivo no encontrado")
@@ -24,7 +25,7 @@ def load_and_transform_data():
             return None
 
         df.columns = df.columns.str.strip()
-        price_columns = [col for col in df.columns if "Precio Energía USD/MWh" in col]
+        price_columns = [col for col in df.columns if "Peaje generación USD/MWh" in col]
 
         dfs = []
         for col in price_columns:
@@ -52,7 +53,7 @@ def load_and_transform_data():
 
             temp_df = df[['CENTRAL', 'TECNOLOGIA', col]].copy()
             temp_df['FECHA'] = date
-            temp_df['Precio Energía USD/MWh'] = pd.to_numeric(
+            temp_df['Peaje generación USD/MWh'] = pd.to_numeric(
                 temp_df[col].astype(str).str.replace(',', ''), 
                 errors='coerce'
             )
@@ -64,10 +65,8 @@ def load_and_transform_data():
             return None
             
         transformed_df = pd.concat(dfs)
-        transformed_df = transformed_df.dropna(subset=['FECHA', 'Precio Energía USD/MWh'])
-        transformed_df = transformed_df[['FECHA', 'CENTRAL', 'TECNOLOGIA', 'Precio Energía USD/MWh', 'Periodo']]
-        transformed_df['FECHA'] = pd.to_datetime(transformed_df['FECHA'], errors='coerce')
-        transformed_df = transformed_df.dropna(subset=['FECHA'])
+        transformed_df = transformed_df.dropna(subset=['FECHA', 'Peaje generación USD/MWh'])
+
         return transformed_df
 
     except Exception as e:
@@ -114,10 +113,11 @@ else:
     st.sidebar.warning("No se encontró la columna 'FECHA' en los datos.")
     df_filtered = df
 
-generadores = df_filtered['TECNOLOGIA'].unique()
-selected_generador = st.sidebar.selectbox("Seleccionar Generador", generadores)
+# Selección de empresa y agente
+empresas = df_filtered['TECNOLOGIA'].unique()
+selected_empresa = st.sidebar.selectbox("Seleccionar Empresa", empresas)
 
-agentes_disponibles = df_filtered[df_filtered['TECNOLOGIA'] == selected_generador]['CENTRAL'].unique()
+agentes_disponibles = df_filtered[df_filtered['TECNOLOGIA'] == selected_empresa]['CENTRAL'].unique()
 selected_agente = st.sidebar.selectbox("Seleccionar Agente", agentes_disponibles)
 
 # Layout
@@ -129,101 +129,104 @@ with tab1:
     with col_left:
         st.subheader(f"Evolución de Precios para Agente: {selected_agente}")
         df_agente = df_filtered[df_filtered['CENTRAL'] == selected_agente]
-        precio_promedio_agente = df_agente['Precio Energía USD/MWh'].mean()
+        precio_promedio_agente = df_agente['Peaje generación USD/MWh'].mean()
 
         fig_agente = px.line(
             df_agente,
             x='FECHA',
-            y='Precio Energía USD/MWh',
+            y='Peaje generación USD/MWh',
             title=f"Precios para {selected_agente}",
             markers=True,
             line_shape='linear'
         )
         fig_agente.update_traces(line=dict(width=3), marker=dict(size=8))
-        fig_agente.update_layout(yaxis_title="Precio Energía USD/MWh", xaxis_title="Fecha", showlegend=False)
+        fig_agente.update_layout(yaxis_title="Peaje generación USD/MWh", xaxis_title="Fecha", showlegend=False)
         st.plotly_chart(fig_agente, use_container_width=True)
 
-        st.metric(label=f"Precio Promedio {selected_agente}", value=f"{precio_promedio_agente:.2f} USD/MWh")
+        st.metric(label=f"Precio Promedio {selected_agente}", value=f"{precio_promedio_agente:.2f} US$/MWh")
 
     with col_right:
-        st.subheader(f"Precio Promedio para Generador: {selected_generador}")
-        df_generador = df_filtered[df_filtered['TECNOLOGIA'] == selected_generador]
-        df_generador_prom = df_generador.groupby(['FECHA', 'TECNOLOGIA'])['Precio Energía USD/MWh'].mean().reset_index()
-        precio_promedio_generador = df_generador['Precio Energía USD/MWh'].mean()
+        st.subheader(f"Precio Promedio para Empresa: {selected_empresa}")
+        df_empresa = df_filtered[df_filtered['TECNOLOGIA'] == selected_empresa]
+        df_empresa_prom = df_empresa.groupby(['FECHA', 'TECNOLOGIA'])['Peaje generación USD/MWh'].mean().reset_index()
+        precio_promedio_empresa = df_empresa['Peaje generación USD/MWh'].mean()
 
-        fig_generador = px.line(
-            df_generador_prom,
+        fig_empresa = px.line(
+            df_empresa_prom,
             x='FECHA',
-            y='Precio Energía USD/MWh',
-            title=f"Precio Promedio para {selected_generador}",
+            y='Peaje generación USD/MWh',
+            title=f"Precio Promedio para {selected_empresa}",
             markers=True,
             line_shape='spline'
         )
-        fig_generador.update_traces(line=dict(width=3, dash='dot'), marker=dict(size=8, symbol='diamond'))
-        fig_generador.update_layout(yaxis_title="Precio Promedio (USD/MWh)", xaxis_title="Fecha", showlegend=False)
-        st.plotly_chart(fig_generador, use_container_width=True)
+        fig_empresa.update_traces(line=dict(width=3, dash='dot'), marker=dict(size=8, symbol='diamond'))
+        fig_empresa.update_layout(yaxis_title="Peaje generación USD/MWh", xaxis_title="Fecha", showlegend=False)
+        st.plotly_chart(fig_empresa, use_container_width=True)
 
-        st.metric(label=f"Promedio {selected_generador}", value=f"{precio_promedio_generador:.2f} USD/MWh")
+        cols_empresa = st.columns(2)
+        with cols_empresa[0]:
+            st.metric(label=f"Promedio {selected_empresa}", value=f"{precio_promedio_empresa:.2f} USD/MWh")
 
     # Evolución del Precio Promedio del Sistema
     st.subheader("Evolución del Precio Promedio del Sistema")
-    df_sistema = df_filtered.groupby('FECHA')['Precio Energía USD/MWh'].mean().reset_index()
-    df_sistema['Precio Energía USD/MWh'] = df_sistema['Precio Energía USD/MWh'].round(2)
-    precio_promedio_sistema = df_sistema['Precio Energía USD/MWh'].mean()
+    df_sistema = df_filtered.groupby('FECHA')['Peaje generación USD/MWh'].mean().reset_index()
+    df_sistema['Peaje generación USD/MWh'] = df_sistema['Peaje generación USD/MWh'].round(2)
+    precio_promedio_sistema = df_sistema['Peaje generación USD/MWh'].mean()
 
     fig_sistema = px.bar(
         df_sistema,
         x='FECHA',
-        y='Precio Energía USD/MWh',
+        y='Peaje generación USD/MWh',
         title="Evolución del Precio Promedio del Sistema",
-        text_auto=True
+        text_auto=True,
+        color_discrete_sequence=['#1f77b4'],
     )
     
     fig_sistema.update_traces(
         textposition='inside',
         textfont=dict(size=18, color='white'))
-    
-    fig_sistema.update_layout(yaxis_title="Precio Promedio (US$/MWh)", xaxis_title="Fecha", showlegend=False, bargap=0.2)
+
+    fig_sistema.update_layout(yaxis_title="Peaje generación Promedio (USD/MWh)", xaxis_title="Fecha", showlegend=False, bargap=0.2)
     st.plotly_chart(fig_sistema, use_container_width=True)
 
     st.metric(label="Precio Promedio del Sistema", value=f"{precio_promedio_sistema:.2f} USD/MWh")
 
 with tab2:
     st.header("Análisis Comparativo")
-    st.subheader("Comparación de Generadores")
+    st.subheader("Comparación de Empresas")
 
-    df_generadores_prom_tab2 = df_filtered.groupby(['FECHA', 'TECNOLOGIA'])['Precio Energía USD/MWh'].mean().reset_index()
+    df_empresas_prom_tab2 = df_filtered.groupby(['FECHA', 'TECNOLOGIA'])['Peaje generación USD/MWh'].mean().reset_index()
     fig_comparacion = px.line(
-        df_generadores_prom_tab2,
+        df_empresas_prom_tab2,
         x='FECHA',
-        y='Precio Energía USD/MWh',
+        y='Peaje generación USD/MWh',
         color='TECNOLOGIA',
         line_dash='TECNOLOGIA',
         symbol='TECNOLOGIA',
-        title="Comparación de Precios Promedio por Generador"
+        title="Comparación de Precios Promedio por Empresa"
     )
     fig_comparacion.update_layout(
-        yaxis_title="Precio Promedio (USD/MWh)",
+        yaxis_title="Peaje generación Promedio (USD/MWh)",
         xaxis_title="Fecha",
-        legend_title="Empresas"
+        legend_title="Tecnologias",
     )
     st.plotly_chart(fig_comparacion, use_container_width=True)
 
     st.subheader("Métricas Clave")
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Precio Mínimo Sistema", f"{df_filtered['Precio Energía USD/MWh'].min():.2f} USD/MWh")
+        st.metric("Precio Mínimo Sistema", f"{df_filtered['Peaje generación USD/MWh'].min():.2f} USD/MWh")
     with col2:
-        st.metric("Precio Promedio Sistema", f"{df_filtered['Precio Energía USD/MWh'].mean():.2f} USD/MWh")
+        st.metric("Precio Promedio Sistema", f"{df_filtered['Peaje generación USD/MWh'].mean():.2f} USD/MWh")
     with col3:
-        st.metric("Precio Máximo Sistema", f"{df_filtered['Precio Energía USD/MWh'].max():.2f} USD/MWh")
+        st.metric("Precio Máximo Sistema", f"{df_filtered['Peaje generación USD/MWh'].max():.2f} USD/MWh")
 
 # Sidebar: información del sistema
 st.sidebar.markdown("---")
 st.sidebar.subheader("Información del Sistema")
 st.sidebar.write(f"Total de agentes: {df_filtered['CENTRAL'].nunique()}")
-st.sidebar.write(f"Total de generadores: {df_filtered['TECNOLOGIA'].nunique()}")
-if 'FECHA' in df_filtered.columns and not df_filtered.empty:
-    min_fecha = df_filtered['FECHA'].min().strftime('%Y-%m-%d')
-    max_fecha = df_filtered['FECHA'].max().strftime('%Y-%m-%d')
-    st.sidebar.write(f"Rango de fechas: {min_fecha} a {max_fecha}")
+st.sidebar.write(f"Total de empresas: {df_filtered['TECNOLOGIA'].nunique()}")
+if 'FECHA' in df_filtered.columns:
+    min_date = df_filtered['FECHA'].min().strftime('%Y-%m-%d')
+    max_date = df_filtered['FECHA'].max().strftime('%Y-%m-%d')
+    st.sidebar.write(f"Rango de fechas: {min_date} a {max_date}")

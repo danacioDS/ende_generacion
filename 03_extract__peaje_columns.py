@@ -20,33 +20,30 @@ def extract_columns_and_save(folder):
                       "serie_temporal_precios.xlsx", "serie_precios_cronologica.xlsx"]
 
     for file in os.listdir(folder):
-        if (file.endswith(".xlsx") and
-        not (
-            file.startswith("peaje_") or
-            file.startswith("ingresos_") or
-            file.startswith("energia_") or
-            file.startswith("extracted_")
-            ) and
-            file not in excluded_files
-        ):
-            # Procesar archivo
+        if (file.endswith(".xlsx") and 
+            not file.startswith("extracted_") and 
+            file not in excluded_files):
+            
             filepath = os.path.join(folder, file)
             try:
                 # Leer el archivo Excel
                 df = pd.read_excel(filepath)
 
                 # Seleccionar columnas específicas por índice
-                df = df.iloc[:, [0, 2, 6]]
+                df = df.iloc[:, [0, 10,12,14,16,18]]
 
                 # Renombrar columnas
                 df.columns = [
-                    "AGENTE",
-                    "Precio Energía USD/MWh",
-                    "Precio Potencia USD/kW",
+                    "CENTRAL",
+                    "Peaje ENDE Trans. USD/MWh",
+                    "Peaje ISA USD/MWh",
+                    "Peaje ENDE USD/MWh",
+                    "Peaje TESA USD/MWh",
+                    "Peaje filiales ENDE US$/MWh"
                 ]
 
                 # Guardar archivo con las columnas extraídas
-                output_file = os.path.join(folder, f"extracted_precios_{file}")
+                output_file = os.path.join(folder, f"extracted_peaje_{file}")
                 df.to_excel(output_file, index=False)
                 print(f"✅ Archivo {file} procesado y guardado como {output_file}.")
             except Exception as e:

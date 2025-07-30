@@ -239,7 +239,7 @@ with tab1:
             x='FECHA',
             y='Potencia kW',
             color='Potencia kW',
-            color_continuous_scale='Viridis',
+            color_continuous_scale='cividis',
             title="Evolución de la Potencia del Sistema",
             text_auto=True
         )
@@ -276,7 +276,7 @@ with tab1:
             y='TECNOLOGIA',
             orientation='h',
             color='Porcentaje',
-            color_continuous_scale='Blues',
+            color_continuous_scale='Greens',
             text='Porcentaje',
             labels={'Porcentaje': 'Participación (%)', 'TECNOLOGIA': ''}
         )

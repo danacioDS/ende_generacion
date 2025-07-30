@@ -13,7 +13,7 @@ st.title("Análisis Integral de Precios Monómicos de Energía")
 def load_and_transform_data():
     try:
         current_dir = Path(__file__).parent if "__file__" in locals() else Path.cwd()
-        file_path = current_dir / "data" / "serie_ingresos.xlsx"
+        file_path = current_dir / "data" / "precios_monomico.xlsx"
 
         if not file_path.exists():
             st.error("Archivo no encontrado")
@@ -178,7 +178,8 @@ with tab1:
         x='FECHA',
         y='Precio Monómico USD/MWh',
         title="Evolución del Precio Promedio del Sistema",
-        text_auto=True
+        text_auto=True,
+        color_discrete_sequence=['#1f77b4'],
     )
     
     fig_sistema.update_traces(

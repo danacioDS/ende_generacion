@@ -12,7 +12,7 @@ st.title("Análisis Integral de Precios de Potencia")
 def load_and_transform_data():
     try:
         current_dir = Path(__file__).parent if "__file__" in locals() else Path.cwd()
-        file_path = current_dir / "data" / "serie_precios.xlsx"
+        file_path = current_dir / "data" / "serie_precios_potencia.xlsx"
 
         if not file_path.exists():
             st.error("Archivo no encontrado")
@@ -50,7 +50,7 @@ def load_and_transform_data():
                 st.warning(f"Error convirtiendo periodo {period_code}: {str(e)}")
                 continue
 
-            temp_df = df[['AGENTE', 'EMPRESA', col]].copy()
+            temp_df = df[['CENTRAL', 'TECNOLOGIA', col]].copy()
             temp_df['FECHA'] = date
             temp_df['Precio Potencia USD/kW'] = pd.to_numeric(
                 temp_df[col].astype(str).str.replace(',', ''), 
@@ -65,7 +65,7 @@ def load_and_transform_data():
             
         transformed_df = pd.concat(dfs)
         transformed_df = transformed_df.dropna(subset=['FECHA', 'Precio Potencia USD/kW'])
-        transformed_df = transformed_df[['FECHA', 'AGENTE', 'EMPRESA', 'Precio Potencia USD/kW', 'Periodo']]
+        transformed_df = transformed_df[['FECHA', 'CENTRAL', 'TECNOLOGIA', 'Precio Potencia USD/kW', 'Periodo']]
         transformed_df['FECHA'] = pd.to_datetime(transformed_df['FECHA'], errors='coerce')
         transformed_df = transformed_df.dropna(subset=['FECHA'])
         return transformed_df
@@ -114,10 +114,10 @@ else:
     st.sidebar.warning("No se encontró la columna 'FECHA' en los datos.")
     df_filtered = df
 
-empresas = df_filtered['EMPRESA'].unique()
-selected_empresa = st.sidebar.selectbox("Seleccionar Empresa", empresas)
+generadores = df_filtered['TECNOLOGIA'].unique()
+selected_generador = st.sidebar.selectbox("Seleccionar Generador", generadores)
 
-agentes_disponibles = df_filtered[df_filtered['EMPRESA'] == selected_empresa]['AGENTE'].unique()
+agentes_disponibles = df_filtered[df_filtered['TECNOLOGIA'] == selected_generador]['CENTRAL'].unique()
 selected_agente = st.sidebar.selectbox("Seleccionar Agente", agentes_disponibles)
 
 # Layout
@@ -128,7 +128,7 @@ with tab1:
 
     with col_left:
         st.subheader(f"Evolución de Precios para Agente: {selected_agente}")
-        df_agente = df_filtered[df_filtered['AGENTE'] == selected_agente]
+        df_agente = df_filtered[df_filtered['CENTRAL'] == selected_agente]
         precio_promedio_agente = df_agente['Precio Potencia USD/kW'].mean()
 
         fig_agente = px.line(
@@ -146,24 +146,24 @@ with tab1:
         st.metric(label=f"Precio Promedio {selected_agente}", value=f"{precio_promedio_agente:.2f} USD/kW")
 
     with col_right:
-        st.subheader(f"Precio Promedio para Empresa: {selected_empresa}")
-        df_empresa = df_filtered[df_filtered['EMPRESA'] == selected_empresa]
-        df_empresa_prom = df_empresa.groupby(['FECHA', 'EMPRESA'])['Precio Potencia USD/kW'].mean().reset_index()
-        precio_promedio_empresa = df_empresa['Precio Potencia USD/kW'].mean()
+        st.subheader(f"Precio Promedio para Generador: {selected_generador}")
+        df_generador = df_filtered[df_filtered['TECNOLOGIA'] == selected_generador]
+        df_generador_prom = df_generador.groupby(['FECHA', 'TECNOLOGIA'])['Precio Potencia USD/kW'].mean().reset_index()
+        precio_promedio_generador = df_generador['Precio Potencia USD/kW'].mean()
 
-        fig_empresa = px.line(
-            df_empresa_prom,
+        fig_generador = px.line(
+            df_generador_prom,
             x='FECHA',
             y='Precio Potencia USD/kW',
-            title=f"Precio Promedio para {selected_empresa}",
+            title=f"Precio Promedio para {selected_generador}",
             markers=True,
             line_shape='spline'
         )
-        fig_empresa.update_traces(line=dict(width=3, dash='dot'), marker=dict(size=8, symbol='diamond'))
-        fig_empresa.update_layout(yaxis_title="Precio Promedio (USD/kW)", xaxis_title="Fecha", showlegend=False)
-        st.plotly_chart(fig_empresa, use_container_width=True)
+        fig_generador.update_traces(line=dict(width=3, dash='dot'), marker=dict(size=8, symbol='diamond'))
+        fig_generador.update_layout(yaxis_title="Precio Promedio (USD/kW)", xaxis_title="Fecha", showlegend=False)
+        st.plotly_chart(fig_generador, use_container_width=True)
 
-        st.metric(label=f"Promedio {selected_empresa}", value=f"{precio_promedio_empresa:.2f} USD/kW")
+        st.metric(label=f"Promedio {selected_generador}", value=f"{precio_promedio_generador:.2f} USD/kW")
 
     # Evolución del Precio Promedio del Sistema
     st.subheader("Evolución del Precio Promedio del Sistema")
@@ -190,17 +190,17 @@ with tab1:
 
 with tab2:
     st.header("Análisis Comparativo")
-    st.subheader("Comparación de Empresas")
+    st.subheader("Comparación de Generadores")
 
-    df_empresas_prom_tab2 = df_filtered.groupby(['FECHA', 'EMPRESA'])['Precio Potencia USD/kW'].mean().reset_index()
+    df_generadores_prom_tab2 = df_filtered.groupby(['FECHA', 'TECNOLOGIA'])['Precio Potencia USD/kW'].mean().reset_index()
     fig_comparacion = px.line(
-        df_empresas_prom_tab2,
+        df_generadores_prom_tab2,
         x='FECHA',
         y='Precio Potencia USD/kW',
-        color='EMPRESA',
-        line_dash='EMPRESA',
-        symbol='EMPRESA',
-        title="Comparación de Precios Promedio por Empresa"
+        color='TECNOLOGIA',
+        line_dash='TECNOLOGIA',
+        symbol='TECNOLOGIA',
+        title="Comparación de Precios Promedio por Generador"
     )
     fig_comparacion.update_layout(
         yaxis_title="Precio Promedio (USD/kW)",
@@ -221,8 +221,8 @@ with tab2:
 # Sidebar: información del sistema
 st.sidebar.markdown("---")
 st.sidebar.subheader("Información del Sistema")
-st.sidebar.write(f"Total de agentes: {df_filtered['AGENTE'].nunique()}")
-st.sidebar.write(f"Total de empresas: {df_filtered['EMPRESA'].nunique()}")
+st.sidebar.write(f"Total de agentes: {df_filtered['CENTRAL'].nunique()}")
+st.sidebar.write(f"Total de generadores: {df_filtered['TECNOLOGIA'].nunique()}")
 if 'FECHA' in df_filtered.columns and not df_filtered.empty:
     min_fecha = df_filtered['FECHA'].min().strftime('%Y-%m-%d')
     max_fecha = df_filtered['FECHA'].max().strftime('%Y-%m-%d')
