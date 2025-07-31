@@ -63,5 +63,9 @@ git init
 git add .
 git commit -m "Comentario de actulizacion"
 git remote add origin https://github.com/tu-usuario/tu-repositorio.git
+
+## actualizar 
+git remote set-url origin https://github.com/danacioDS/ende_distribucion.git
+
 git push -u origin main
 git status
