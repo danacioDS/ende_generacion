@@ -1,10 +1,8 @@
 # Librerías necesarias para el proyecto
-requests
-openpyxl
-pyexcel
+﻿streamlit
 pandas
 numpy
-matplotlib
-streamlit
-jupyter
 plotly
+glob2
+openpyxl
+requests
